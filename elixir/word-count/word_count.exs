@@ -6,15 +6,24 @@ defmodule Words do
   """
   @spec count(String.t) :: map()
   def count(sentence) do
-    split = Enum.map String.split(sentence, ~r/[ _]/), fn(x) -> String.downcase Regex.replace(~r/[^\w-]/u, x, "", global: true) end
-    {words, count_hash} = Enum.map_reduce split, %{}, fn(word, count_hash) ->
-      count_hash = cond do
-        String.length(word) == 0 -> count_hash
-        Map.has_key?(count_hash, word) -> Map.merge(count_hash, Map.put(count_hash, word, count_hash[word]+1))
-        true -> Map.put(count_hash, word, 1)
-      end
-      {word, count_hash}
-    end
-    count_hash
+    sentence
+    |> split_into_normalized_words
+    |> histogram
+    |> Map.delete("")
+  end
+
+  defp split_into_normalized_words(sentence) do
+    sentence
+    |> String.downcase
+    |> String.split(~r/[\s_]+/u)
+    |> Enum.map(&normalize/1)
+  end
+
+  defp normalize(word), do: String.replace(word, ~r/[^\w-]+/u, "")
+
+  defp histogram(words) do
+    Enum.reduce(words, %{}, fn(word, result) ->
+      Map.put result, word, (result[word] || 0) + 1
+    end)
   end
 end
