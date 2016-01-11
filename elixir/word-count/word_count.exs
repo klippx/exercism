@@ -7,21 +7,20 @@ defmodule Words do
   @spec count(String.t) :: map()
   def count(sentence) do
     sentence
-    |> split_into_normalized_words
-    |> histogram
-    |> Map.delete("")
+    |> downcase
+    |> split
+    |> normalize
+    |> render_histogram
+    |> remove_empty_keys
   end
 
-  defp split_into_normalized_words(sentence) do
-    sentence
-    |> String.downcase
-    |> String.split(~r/[\s_]+/u)
-    |> Enum.map(&normalize/1)
-  end
+  defp downcase(sentence), do: String.downcase(sentence)
+  defp split(sentence), do: String.split(sentence, ~r/[\s_]+/u)
+  defp normalize(sentence), do: Enum.map(sentence, &normalize_word/1)
+  defp normalize_word(word), do: String.replace(word, ~r/[^\w-]+/u, "")
+  defp remove_empty_keys(map), do: Map.delete(map, "")
 
-  defp normalize(word), do: String.replace(word, ~r/[^\w-]+/u, "")
-
-  defp histogram(words) do
+  defp render_histogram(words) do
     Enum.reduce(words, %{}, fn(word, result) ->
       Map.put result, word, (result[word] || 0) + 1
     end)
